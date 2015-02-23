@@ -25,8 +25,12 @@ PUNCH CARD ENCODING
  */
 
 
-String message =        "println('Hello, world.');";
-String outputFilename = "HelloWorld.pdf";
+boolean debugMessage =         false;
+boolean drawNumbersAndGuides = true;
+
+//String message =               "println('Hello, world.');";
+String message = "2.7GHZ INTEL CORE I7, 16GB 1600MHZ DDR3, NVIDIA GEFORCE GT 650M 1024 MB, 15IN";
+String outputFilename =        "HelloWorld.pdf";
 
 int   ppi =         72;
 
@@ -48,22 +52,38 @@ float punchHeight = 0.1238 * ppi;
 PFont rowLabel;
 PShape card;
 
+char[] acceptableChars = {
+  'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z', '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', '+', '-', '/', '=', '\'', '.', ')', '$', '*', '(', ';', ','
+};
+
 
 void setup() {
 
   // let us know what's happening
   println("PUNCH CARD ENCODING");
-  if (message.length() > 80) {
-    println("Message too long, trimming to 80 chars...");
-    message = message.substring(0, 80);
+  if (debugMessage) {
+    println("Encoding all possible characters:");
+    for (int i=0; i<acceptableChars.length; i++) {
+      print(acceptableChars[i] + " ");
+    }
   }
-  println("Encoding: \"" + message + "\"");
+  else {
+    if (message.length() > 80) {
+      println("Message too long, trimming to 80 chars...");
+      message = message.substring(0, 80);
+    }
+    if (message.contains(";")) {
+      println("Message contains non-standard characters - using anyway...");
+    }
+    println("Encoding: \"" + message + "\"");
+  }
 
   // setup
   size(int(11 * ppi), int(8.5 * ppi));
   beginRecord(PDF, outputFilename);
   background(255);
-  translate(2 * ppi, 2 * ppi);
+  strokeWeight(0.5);
+  translate((width-cardWidth)/2, (height-cardHeight)/2);
 
   // font setup
   rowLabel = createFont("Helvetica", 4);
@@ -73,35 +93,40 @@ void setup() {
   card = loadShape("Card.svg");
   shape(card, 0, 0);
 
-  // numbers (for debugging)
-  fill(0, 50);
-  noStroke();
-  for (int col=0; col<numCols; col++) {
-    float x = rightMargin + (col * colWidth) + 1;
-    float y = topMargin + 6;
-    text(col + 1, x, y);
-  }
-  for (int row=2; row<numRows; row++) {
+  // numbers and guides (for debugging)
+  if (drawNumbersAndGuides) {
+    fill(0, 50);
+    noStroke();
     for (int col=0; col<numCols; col++) {
       float x = rightMargin + (col * colWidth) + 1;
-      float y = topMargin + (row * rowHeight) + 6;
-      text(row - 2, x, y);
+      float y = topMargin + 6;
+      text(col + 1, x, y);
+    }
+    for (int row=2; row<numRows; row++) {
+      for (int col=0; col<numCols; col++) {
+        float x = rightMargin + (col * colWidth) + 1;
+        float y = topMargin + (row * rowHeight) + 6;
+        text(row - 2, x, y);
+      }
     }
   }
 
   // punch some holes!
   noFill();
   stroke(0);
-  strokeWeight(0.5);
-  for (int i=0; i<message.length (); i++) {
-    encodePunch(message.charAt(i), i);
+  if (debugMessage) {
+    for (int i=0; i<acceptableChars.length; i++) {
+      encodePunch(acceptableChars[i], i);
+    }
+  } else {
+    for (int i=0; i<message.length (); i++) {
+      encodePunch(message.charAt(i), i);
+    }
   }
 
-  // done
+  // save and done
   println("Saving PDF...");
   endRecord();
   println("\nDONE!");
 }
-
-
 
